@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#######
+#PLUGIN DE NAGIOS PARA EL CONTROL DE FECHA DE CERTIFICADOS WEB
+#
+######
+
+declare -i UNKNOWN=-1
+declare -i OK=0
+declare -i WARNING=1
+declare -i CRITICAL=2
+
+fechaCerti=$(/bin/date --date "$(/usr/bin/gnutls-cli --print-cert $1 < /dev/null | /bin/grep -i activated | /bin/grep -i $1 | /usr/bin/cut -d\` -f5 | /usr/bin/cut -d" " -f1 | /usr/bin/tr -d \`\-)" +%s)
+
+fechaHoy=$(/bin/date +%s)
+
+diferencia=$(( ($fechaCerti - $fechaHoy ) / (60*60*24) ))
+
+if [ $diferencia -lt 60 ];then
+        if [ $diferencia -lt 30 ];then
+                echo -e "Faltan $diferencia dias para que caduque $1"
+                exit $CRITICAL
+        fi
+        echo -e "Faltan $diferencia dias para que caduque $1"
+        exit $WARNING
+fi
+
+echo -e "Faltan $diferencia dias para que caduque $1"
+exit $OK
